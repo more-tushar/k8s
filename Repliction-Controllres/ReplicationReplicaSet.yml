@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: ReplicaSet
+meradata: 
+  name: nodejsapprs
+  namespace: test-ns
+spec:
+  replicas: 1
+  selector: 
+    matchLabels:
+      app: nodeapp
+    template: #Pod Template
+      metadata: 
+        name: nodeapppod
+        labels:
+          app: nodeapp
+      spec:
+        containes:
+        - name: nodeappcontainer
+          image: tushar660/name:1
+          ports:
+          - containesPort: 9981
+---
+    # NodePort service 
+apiVersion: v1
+kind: Service
+meradata:
+  name: mavenwebappsvc #<serviceName>
+  namespace: test-ns
+spec:
+  # <CluserIP/Nodeport/LoadBalancer>
+  type: NodePort
+  selector:
+    app: mavenwebapp             #POD labels as selectors                                       
+   #  <PODLabelKEY>: <PODLABELVALUE>
+  ports:
+    - port: 80           #<servicePort>
+      targetPort: 8080         #<ContainerPort>
+      # NodePort: 30032

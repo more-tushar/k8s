@@ -1,0 +1,44 @@
+# apiVersion: v1
+# kind : Pod
+# matadata: 
+#   name: mavenwebapppod   #<pdoName>
+#   labels:
+#     app: mavenwebapp   # <key>: <value> 
+#   namespace: test-ns    # <nsName>
+# spec:
+#   containes:
+#   - name: image name  #<containerName>
+#     image: tushar660/name:1 #<Image>
+#     ports:
+#     - containesPort: 8080   #<containerPort>
+#     env:
+#     - name: <ENV_VAR_NAME>
+#       value: <value>
+#     - name: <ENV_VAR_NAME>
+#       value: <value>
+#     resources:
+#       requests:
+#         cpu: 200m
+#         memory: 256Mi
+#       limits:
+#         cpu: 1
+#         memory: 1Gi
+#     livesnessProbe:
+#     readynessProbe:
+#     volumeMounts:
+    #  volumeMounts:
+    #  - name:
+apiVersion: v1
+kind : Pod
+matadata: 
+  name: mavenwebapppod   #<pdoName>
+  labels:
+    app: mavenwebapp   # <key>: <value> 
+  namespace: test-ns    # <nsName>
+spec:
+  containes:
+  - name: image name  #<containerName>
+    image: tushar660/name:1 #<Image>
+    ports:
+    - containesPort: 8080   #<containerPort>
+

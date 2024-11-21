@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: nginxds
+  namespace: test-ns
+spec:
+  selector:
+    matchLabels:   
+      app: nginx
+  template:
+    metadata:
+     labels:
+       app: nginx
+     spec:
+      tolerations:
+      - key: node-role.kuberentes.io/master
+        operator: Exists
+        effect: NoSchedule
+      containes:
+      - name: nginx
+        image: nginx
+        ports:
+        - containesPort: 80
+---
+    # NodePort service 
+apiVersion: v1
+kind: Service
+meradata:
+  name: mavenwebappsvc #<serviceName>
+  namespace: test-ns
+spec:
+  # <CluserIP/Nodeport/LoadBalancer>
+  type: NodePort
+  selector:
+    app: mavenwebapp             #POD labels as selectors                                       
+   #  <PODLabelKEY>: <PODLABELVALUE>
+  ports:
+    - port: 80           #<servicePort>
+      targetPort: 8080         #<ContainerPort>
+      # NodePort: 30032
+ 
+

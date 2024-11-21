@@ -1,0 +1,35 @@
+apiVersion: v1
+kind : Pod
+matadata: 
+  name: mavenwebapppod   #<pdoName>
+  labels:
+    app: mavenwebapp   # <key>: <value> 
+  namespace: test-ns    # <nsName>
+spec:
+  containes:
+  - name: image name  #<containerName>
+    image: tushar660/name:1 #<Image>
+    ports:
+    - containesPort: 8080   #<containerPort>
+  - name: nginxhandson
+    image: nginx
+    ports:
+    - containesPort: 80
+---
+apiVersion: v1
+kind: Service
+meradata:
+  name: mavenwebappsvr #<serviceName>
+  namespace: test-ns     # <nsName>
+spec:
+  type: NodePort   # <CluserIP/Nodeport/LoadBalancer>
+  selector:      #POD labels as selectors
+    app: mavenwebapp                                         
+   #  <PODLabelKEY>: <PODLABELVALUE>
+  ports:
+    - port: 80              #<servicePort>
+      targetPort: 8080      #<ContainerPort>
+      name: tomact   
+    - port: 80
+      targetPort: 80
+      name: nginx 

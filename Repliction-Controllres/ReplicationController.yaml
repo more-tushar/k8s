@@ -1,0 +1,62 @@
+# apiVersion: v1
+# kind: ReplictionController
+# metadata:
+#   name: <rcName>
+#   namespace: <nsName>
+#   # labels:
+#     # <key> : <values>
+# spec:
+#  replicas: <NoOfPodReplicas>
+#  template: # POD Template
+#   matadata: 
+#     name: <PodName>
+#     labels: # POD Lables
+#       #<key> : <values>
+#     namespace: test-ns
+#   spec:
+#     containes:
+#     - name: <ContainerName> 
+#       image: <ImageName> 
+#       ports:
+#       - containesPort: <containesPort>
+
+apiVersion: v1
+kind: ReplictionController
+metadata:
+  name: mavenwebapprc  #<Repliction_Controller_Name>
+  namespace: test-ns    #<namespaceName>
+  # labels:
+    # <key> : <values>
+spec:
+ replicas: 2   #<NoOfPodReplias>
+ selector: 
+   app: mavenwebapp
+ template: # POD Template
+  matadata: 
+    name: mavenwebapppod
+    labels: # POD Lables
+      app: mavenwebapp
+  spec:
+    containes:
+    - name: mavenwebappcontainer 
+      image: tushar660/name:1 
+      ports:
+      - containesPort: 8080
+---
+    # NodePort service 
+apiVersion: v1
+kind: Service
+meradata:
+  name: mavenwebappsvc #<serviceName>
+  namespace: test-ns
+spec:
+  # <CluserIP/Nodeport/LoadBalancer>
+  type: NodePort
+  selector:
+    app: mavenwebapp             #POD labels as selectors                                       
+   #  <PODLabelKEY>: <PODLABELVALUE>
+  ports:
+    - port: 80           #<servicePort>
+      targetPort: 8080         #<ContainerPort>
+      # NodePort: 30032
+ 

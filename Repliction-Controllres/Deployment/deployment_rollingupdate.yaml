@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: deployment
+matadata: 
+  name: mavenwebappd
+  namespace: test-ns
+spec:
+  replicas: 2
+  revisionHistoryLimit: 5 #Revison History
+  strategy:
+    type: RollingUpdate
+    RollingUpdate:
+      maxSurge: 1
+      maxUna vailable: 1
+    minReadySeconds: 30
+  selector:
+  matchLabels:
+    app: mavenwebapp
+  template:
+    metadata:
+      name: mavenwebapppod
+      labels:
+        app: mavenwebapp
+      spec:
+      containes:
+      - name: mavenwebappcontainer
+        image: tushar660/name:1
+        ports: 
+        - containesPort: 8080
+---
+# NodePort service 
+apiVersion: v1
+kind: Service
+meradata:
+  name: mavenwebappsvc #<serviceName>
+  namespace: test-ns
+spec:
+  type: NodePort
+  selector:
+    app: mavenwebapp  #POD labels as selectors                                       
+   #  <PODLabelKEY>: <PODLABELVALUE>
+  ports:
+  - port: 80           #<servicePort>
+    targetPort: 8080         #<ContainerPort>
+    # NodePort: 30032

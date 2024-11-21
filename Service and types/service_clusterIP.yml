@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+meradata:
+  name: mavenwebappsvr #<serviceName>
+  namespace: test-ns     # <nsName>
+spec:
+  type: ClusterIP   # <CluserIP/Nodeport/LoadBalancer>
+  selector:      #POD labels as selectors
+    app: mavenwebapp                                         
+   #  <PODLabelKEY>: <PODLABELVALUE>
+  ports:
+    - port: 80              #<servicePort>
+      targetPort: 8080      #<ContainerPort>
+     
