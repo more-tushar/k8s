@@ -1,0 +1,14 @@
+# Static Volume --> The volumes created by admins(DevOps) manually.
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nfspv
+  namespace: test-ns
+spec:
+  capacity:
+    storage: 2Gi
+  accessModes:
+  - ReadWriteMany
+  nfs:
+   server: 172.31.47.141   #<ip>
+   path: /mnt/nfs_share

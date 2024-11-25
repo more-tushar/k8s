@@ -1,0 +1,13 @@
+# Static Volume --> The volumes created by admins(DevOps) manually.
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: hostpathpv
+  namespace: test-ns
+spec:
+  capacity:
+    storage: 2Gi
+  accessModes:
+  - ReadWriteOnce
+  hostPath:
+   path: /mongodbdata 
