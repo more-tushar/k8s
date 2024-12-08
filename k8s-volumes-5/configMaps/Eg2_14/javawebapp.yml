@@ -1,0 +1,66 @@
+# Deployment configuration for the Java web application
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: javawebapp  # Name of the Deployment
+spec:
+  selector:
+    matchLabels:
+      app: javawebapp  # Label to identify the pods managed by this Deployment
+  template:
+    metadata:
+      labels:
+        app: javawebapp  # Label for the pod template
+    spec:
+      containers:
+      - name: javawebapp  # Name of the container
+        image: tushar660/maven-app:1  # Docker image to be used for the container
+        resources:
+          requests:
+            cpu: "200m"  # Minimum CPU required for the container
+            memory: "256Mi"  # Minimum memory required for the container
+          limits:
+            cpu: "300m"  # Maximum CPU allocated for the container
+            memory: "500Mi"  # Maximum memory allocated for the container
+        ports:
+        - containerPort: 8080  # Port exposed by the container
+        volumeMounts:
+        - name: configmapvol  # Name of the volume to mount
+          mountPath: "/usr/local/tomcat/conf/tomcat-users.xml"  # Path inside the container where the file will be mounted
+          subPath: "tomcat-users.xml"  # File to be mounted from the volume
+      volumes:
+      - name: configmapvol  # Name of the volume
+        configMap:
+          name: javawebapptomcatconf  # ConfigMap providing the volume data
+          items:
+          - key: "tomcat-users.xml"  # Key from the ConfigMap to use
+            path: "tomcat-users.xml"  # File name within the mounted volume
+---
+# Service to expose the Java web application
+apiVersion: v1
+kind: Service
+metadata:
+  name: myapp  # Name of the Service
+spec:
+  type: NodePort  # Exposes the Service on a port accessible from outside the cluster
+  selector:
+    app: javawebapp  # Matches the pods with this label
+  ports:
+  - port: 80  # Port on which the Service is exposed
+    targetPort: 8080  # Port on the pod to which traffic is forwarded
+
+---
+# ConfigMap containing configuration data for the Tomcat server
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: javawebapptomcatconf  # Name of the ConfigMap
+data:
+  tomcat-users.xml: |  # Configuration file for Tomcat users
+    <?xml version='1.0' encoding='utf-8'?>
+    <tomcat-users xmlns="http://tomcat.apache.org/xml"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://tomcat.apache.org/xml tomcat-users.xsd"
+              version="1.0">
+    <user username="tushar" password="test" roles="admin-gui,manager-gui"/>  # Tomcat user credentials
+    </tomcat-users>

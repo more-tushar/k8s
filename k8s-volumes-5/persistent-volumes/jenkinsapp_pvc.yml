@@ -1,0 +1,67 @@
+# In this ex there is no need to create pv beacouse nfsstorageclass this file create StorageClass for nfs 
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: devops-ns
+  labels:
+    team: devops
+    tools: cicdtools
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jenkinsdeployment
+  namespace: devops-ns
+spec:
+  selector:
+    matchLabels:
+      app: jenkins
+  template:
+    metadata:
+      labels:
+        app: jenkins
+    spec:
+      containers:
+      - name: jenkins
+        image: jenkins/jenkins:lts
+        resources:
+          requests:
+            cpu: 200m
+            memory: 266Mi 
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 8080
+        volumeMounts:
+        - name: jenkinsvol
+          mountPath: /var/jenkins_home
+      volumes: 
+      - name: jenkinsvol
+        PersistentVolumeClaim:
+          claimName: jenkinspvc
+        
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jenkinsvol
+  namespace: devops-ns
+spec:
+  resources:
+    requests:
+      storage: 2Gi
+  accessModes:
+    - ReadWriteOnce
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jenkinssvc
+spec:
+  type: NodePort
+  selector:
+    app: jenkins
+  ports:
+  - port: 80
+    targetPort: 8080
