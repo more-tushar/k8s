@@ -18,7 +18,7 @@ spec:
   template:
     metadata:
       name: mavenwebapppod
-      labels:
+      labels: 
         app: mavenwebapp
       spec:
       containes:
@@ -33,6 +33,20 @@ spec:
           limits:
             memory: "500Mi"
             cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /java-web-application/
+            port: 8080
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /java-web-application/
+            port: 8080
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 5
 ---
 # NodePort service 
 apiVersion: v1
@@ -77,3 +91,18 @@ spec:
         type: Utilization
         averageUtilization: 80
 
+
+        containers:
+  - name: liveness
+    image: registry.k8s.io/busybox
+    args:
+    - /bin/sh
+    - -c
+    - touch /tmp/healthy; sleep 30; rm -f /tmp/healthy; sleep 600
+    livenessProbe:
+      exec:
+        command:
+        - cat
+        - /tmp/healthy
+      initialDelaySeconds: 5
+      periodSeconds: 5
