@@ -33,14 +33,14 @@ spec:
           limits:
             memory: "500Mi"
             cpu: "200m"
-        livenessProbe:
+        livenessProbe:  # Purpose: Ensures the application is alive and running. If this probe fails, Kubernetes will restart the container.
           httpGet:
             path: /java-web-application/
             port: 8080
           initialDelaySeconds: 60
           periodSeconds: 30
           timeoutSeconds: 5
-        readinessProbe:
+        readinessProbe:  #Purpose: Ensures the application is ready to handle requests. If this probe fails, Kubernetes will not route traffic to the container.
           httpGet:
             path: /java-web-application/
             port: 8080

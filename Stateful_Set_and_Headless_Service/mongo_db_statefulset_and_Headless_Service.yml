@@ -1,0 +1,89 @@
+# StatefulSet to manage MongoDB replicas
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mongod  # Name of the StatefulSet
+  namespace: test-ns  # Namespace where the StatefulSet will be created
+spec:
+  selector:
+    matchLabels:
+      app: mongod  # Label selector to identify the pods managed by this StatefulSet
+  serviceName: mongodb-service  # Headless service name used by MongoDB
+  replicas: 3  # Number of replicas (pods) in the StatefulSet
+  template:
+    metadata:
+      labels:
+        app: mongod  # Labels for the pods
+    spec:
+      terminationGracePeriodSeconds: 10  # Time given for graceful termination of pods
+      containers:
+      - name: mongodbcontainer  # Name of the container running MongoDB
+        image: mongo  # MongoDB Docker image
+        command:
+         - "mongod"  # Command to start the MongoDB process
+         - "--bind_ip"  # Bind to all network interfaces
+         - "0.0.0.0"
+         - "--replSet"  # Specify the replica set name
+         - "MainRepSet"
+        resource:
+          requests:  # Minimum resources guaranteed for the container
+            cpu: "200m"
+            memory: "128Mi"
+          limits:  # Maximum resources the container can use
+            cpu: "200m"
+            memory: "128Mi"
+        ports:
+        - containerPort: 27017  # MongoDB default port
+        volumeMounts:
+        - name: mongodb-persistent-storage-claim  # Persistent volume claim name
+          mountPath: "/data/db"  # Path in the container to store MongoDB data
+  volumeClaimTemplates:
+  - metadata:
+      name: mongodb-persistent-storage-claim  # Persistent volume claim template name
+    spec:
+      accessModes: [ "ReadWriteOnce" ]  # Access mode for the volume
+      resources:
+        requests:
+          storage: 1Gi  # Storage size requested for the volume
+---
+
+# Service to expose the MongoDB StatefulSet
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongodb-service  # Name of the Service
+  namespace: test-ns  # Namespace where the Service will be created
+spec:
+  ClusterIP: None  # Headless Service for direct pod-to-pod communication
+  selector:
+    app: mongod  # Label selector to route traffic to the correct pods
+  ports:
+  - port: 27017  # Port exposed by the Service
+    targetPort: 27017  # Target port on the MongoDB container
+
+# Setup MongoDB Replica Set and Add Members
+# Steps to configure MongoDB replica set and create an admin user:
+
+# 1. Go inside one of the pods (e.g., mongod-0):
+# kubectl exec -it mongod-0 -n test-ns --sh
+
+# 2. Connect to the MongoDB shell:
+# mongo
+
+# 3. Initiate the MongoDB replica set and add members:
+# rs.initiate({
+#   _id: "MainRepSet",  # Name of the replica set
+#   version: 1,
+#   members: [
+#     { _id: 0, host: "mongod-0.mongodb-service.test-ns.svc.cluster.local:27017" },
+#     { _id: 1, host: "mongod-1.mongodb-service.test-ns.svc.cluster.local:27017" },
+#     { _id: 2, host: "mongod-2.mongodb-service.test-ns.svc.cluster.local:27017" }
+#   ]
+# });
+
+# 4. Create a root user with a username and password:
+# db.getSiblingDB("admin").createUser({
+#   user: "devdb",  # Admin username
+#   pwd: "devdb123",  # Admin password
+#   roles: [{ role: "root", db: "admin" }]  # Assign root role
+# });

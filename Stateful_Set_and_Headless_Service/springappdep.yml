@@ -1,0 +1,79 @@
+# # ConfigMap to store non-sensitive application configuration data
+# apiVersion: v1
+# kind: ConfigMap
+# metadata:
+#   name: springappconfig  # Name of the ConfigMap
+#   # Namespace not specified, defaults to 'default'
+# data:
+#   mongodbusername: devdb  # MongoDB username to be used in the application
+# ---
+
+# # Secret to store sensitive application configuration data like passwords
+# apiVersion: v1
+# kind: Secret
+# metadata:
+#   name: springappsecret  # Name of the Secret
+#   # Namespace not specified, defaults to 'default'
+# type: Opaque
+# stringData:
+#   mongodbpassword: devdb123  # MongoDB password to be used in the application
+
+
+# Deployment to manage the pods running the Spring application
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: springappdeployment  # Name of the Deployment
+  namespace: test-ns  # Namespace where the Deployment will be created
+spec:
+  replicas: 2  # Number of replicas (pods) to run
+  selector:
+    matchLabels:
+      app: springapp  # Label selector to match pods managed by this Deployment
+  template:
+    metadata:
+      name: springapppod  # Name of the pod template
+      labels:
+        app: springapp  # Label applied to the pods for identification
+    spec:
+      containers:
+      - name: springappcontainer  # Name of the container in the pod
+        image: tushar660/spring-boot-mongo:1  # Docker image for the application
+        resources:
+          requests:  # Minimum resources guaranteed for the container
+            memory: "200Mi"
+            cpu: "200m"
+          limits:  # Maximum resources the container can use
+            memory: "128Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 8080  # Application port exposed inside the container
+        env:  # Environment variables passed to the container
+        - name: MONGO_DB_USERNAME
+          valueFrom:
+            configMapKeyRef:
+              name: springappconfig  # Reference to ConfigMap for username
+              key: mongodbusername
+        - name: MONGO_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: springappsecret  # Reference to Secret for password
+              key: mongodbpassword
+        - name: MONGO_DB_HOSTNAME
+          value: mongodb-service  # Hostname of the MongoDB service (local)
+          # If the MongoDB service is in a different namespace, use the full DNS:
+          # value: mongodb-service.test-ns.svc.cluster.local
+---
+# Service to expose the application to the network
+apiVersion: v1
+kind: Service
+metadata:
+  name: springapp  # Name of the Service
+  namespace: test-ns  # Namespace where the Service will be created
+spec:
+  selector:
+    app: springapp  # Label selector to route traffic to the correct pods
+  ports:
+  - port: 80  # Port exposed by the Service
+    targetPort: 8080  # Port on the container that the Service routes to
+  type: NodePort  # Service type to expose the application on a specific port on the nodes
