@@ -1,0 +1,79 @@
+# Deployment configuration for the Java web application
+apiVersion: apps/v1  # Specifies the API version for the Deployment resource
+kind: Deployment  # Declares that this is a Deployment resource
+metadata:
+  name: javawebapp  # Name of the Deployment
+spec:
+  replicas: 2  # Number of pod replicas to create
+  selector:
+    matchLabels:
+      app: javawebapp  # Label used to identify and match pods managed by this Deployment
+  template:
+    metadata:
+      labels:
+        app: javawebapp  # Label applied to the pod template
+    spec:
+      affinity:
+        podAntiAffinity:  # Ensures pods are scheduled on different nodes to enhance high availability
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values: 
+                #1 - nginx  # Uncomment if you want to define anti-affinity with nginx pods
+                - javawebapp  # Anti-affinity rule applies to other javawebapp pods
+            topologyKey: "kubernetes.io/hostname"  # Ensures pods are scheduled on different hosts
+      containers:
+      - name: javawebapp  # Name of the container
+        image: tushar660/maven-app:1  # Docker image to be used for the container
+        resources:
+          requests:
+            cpu: "200m"  # Minimum CPU resources required for the container
+            memory: "256Mi"  # Minimum memory resources required for the container
+          limits:
+            cpu: "300m"  # Maximum CPU resources allocated for the container
+            memory: "500Mi"  # Maximum memory resources allocated for the container
+        ports:
+        - containerPort: 8080  # Port exposed by the container for communication
+        volumeMounts:
+        - name: configmapvol  # Name of the volume to mount
+          mountPath: "/usr/local/tomcat/conf/tomcat-users.xml"  # Path in the container where the volume will be mounted
+          subPath: "tomcat-users.xml"  # Specifies the file from the volume to mount
+        volumes:
+      - name: configmapvol  # Volume for mounting configuration data
+        configMap:
+          name: javawebapptomcatconf  # Reference to the ConfigMap containing the data
+          items:
+          - key: "tomcat-users.xml"  # Key in the ConfigMap to use
+            path: "tomcat-users.xml"  # File name inside the container
+
+---
+# Service to expose the Java web application
+apiVersion: v1  # Specifies the API version for the Service resource
+kind: Service  # Declares that this is a Service resource
+metadata:
+  name: myapp  # Name of the Service
+spec:
+  type: NodePort  # Exposes the service on a NodePort, making it accessible outside the cluster
+  selector:
+    app: javawebapp  # Matches pods with this label to route traffic to them
+  ports:
+  - port: 80  # Port on which the Service is exposed
+    targetPort: 8080  # Port on the pod to which traffic is forwarded
+
+---
+# ConfigMap containing configuration data for the Tomcat server
+apiVersion: v1  # Specifies the API version for the ConfigMap resource
+kind: ConfigMap  # Declares that this is a ConfigMap resource
+metadata:
+  name: javawebapptomcatconf  # Name of the ConfigMap
+data:
+  tomcat-users.xml: |  # Configuration file for Tomcat users
+    <?xml version='1.0' encoding='utf-8'?>
+    <tomcat-users xmlns="http://tomcat.apache.org/xml"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://tomcat.apache.org/xml tomcat-users.xsd"
+              version="1.0">
+    <user username="tushar" password="test" roles="admin-gui,manager-gui"/>  # User credentials for accessing Tomcat manager and admin GUI
+    </tomcat-users>

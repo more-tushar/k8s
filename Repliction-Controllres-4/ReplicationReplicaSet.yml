@@ -16,7 +16,7 @@ spec:
       spec:
         containes:
         - name: nodeappcontainer
-          image: tushar660/name:1
+          image: tushar660/maven-app:1
           ports:
           - containesPort: 9981
 ---

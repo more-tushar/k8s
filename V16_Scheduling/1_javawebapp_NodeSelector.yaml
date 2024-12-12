@@ -1,0 +1,72 @@
+# Label the Kubernetes node with a name for targeting deployments
+# Example command: kubectl label nodes <node-name> name=WorkerOne
+
+# Deployment configuration for the Java web application
+apiVersion: apps/v1  # Specifies the API version to use for the Deployment
+kind: Deployment  # Specifies this configuration defines a Deployment
+metadata:
+  name: javawebapp  # Name of the Deployment
+spec:
+  replicas: 2  # Number of pod replicas to create
+  selector:
+    matchLabels:
+      app: javawebapp  # Label to identify the pods managed by this Deployment
+  template:
+    metadata:
+      labels:
+        app: javawebapp  # Label for the pod template
+    spec:
+      nodeSelector:  # Ensures pods are scheduled on nodes with this label
+        name: WorkerOne  # Matches the node label set with `kubectl label`
+      containers:
+      - name: javawebapp  # Name of the container inside the pod
+        image: tushar660/maven-app:1  # Docker image to be used for the container
+        resources:
+          requests:
+            cpu: "200m"  # Minimum CPU required for the container
+            memory: "256Mi"  # Minimum memory required for the container
+          limits:
+            cpu: "300m"  # Maximum CPU allocated for the container
+            memory: "500Mi"  # Maximum memory allocated for the container
+        ports:
+        - containerPort: 8080  # Port exposed by the container
+        volumeMounts:  # Mounts a ConfigMap file into the container
+        - name: configmapvol  # Name of the volume to mount
+          mountPath: "/usr/local/tomcat/conf/tomcat-users.xml"  # Path in the container for the mounted file
+          subPath: "tomcat-users.xml"  # Specifies the file to be used from the ConfigMap
+      volumes:  # Define volumes to be used by the pod
+      - name: configmapvol  # Name of the volume
+        configMap:  # Use data from the specified ConfigMap
+          name: javawebapptomcatconf  # Name of the ConfigMap
+          items:  # Define specific keys and paths within the ConfigMap
+          - key: "tomcat-users.xml"  # Key in the ConfigMap
+            path: "tomcat-users.xml"  # File name for the mounted data
+---
+# Service configuration to expose the Java web application
+apiVersion: v1  # Specifies the API version to use for the Service
+kind: Service  # Specifies this configuration defines a Service
+metadata:
+  name: myapp  # Name of the Service
+spec:
+  type: NodePort  # Exposes the Service externally on a port accessible from outside the cluster
+  selector:
+    app: javawebapp  # Matches the pods with the label `app=javawebapp`
+  ports:
+  - port: 80  # External port on which the Service is accessible
+    targetPort: 8080  # Port on the container to which traffic is forwarded
+    # Optional: Add `nodePort` to specify a custom port in the 30000-32767 range
+---
+# ConfigMap containing configuration data for the Tomcat server
+apiVersion: v1  # Specifies the API version to use for the ConfigMap
+kind: ConfigMap  # Specifies this configuration defines a ConfigMap
+metadata:
+  name: javawebapptomcatconf  # Name of the ConfigMap
+data:
+  tomcat-users.xml: |  # Key and the content for the file
+    <?xml version='1.0' encoding='utf-8'?>
+    <tomcat-users xmlns="http://tomcat.apache.org/xml"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://tomcat.apache.org/xml tomcat-users.xsd"
+              version="1.0">
+    <user username="tushar" password="test" roles="admin-gui,manager-gui"/>  # Example Tomcat user credentials with roles
+    </tomcat-users>

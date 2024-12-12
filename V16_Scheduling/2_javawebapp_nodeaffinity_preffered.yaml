@@ -1,0 +1,81 @@
+# Deployment configuration for the Java web application
+apiVersion: apps/v1  # Specifies the API version for Deployment
+kind: Deployment  # Declares that this is a Deployment resource
+metadata:
+  name: javawebapp  # Name of the Deployment
+spec:
+  replicas: 2  # Number of pod replicas to create for high availability
+  selector:
+    matchLabels:
+      app: javawebapp  # Label to identify the pods managed by this Deployment
+  template:
+    metadata:
+      labels:
+        app: javawebapp  # Label assigned to the pod template for identification
+    spec:
+      affinity:
+        nodeAffinity:  # Specifies scheduling preferences for the pods
+          preferredDuringSchedulingIgnoredDuringExecution:  # Non-mandatory node preference
+          - weight: 1  # Weight of this preference (higher is more preferred)
+            preference:
+              matchExpressions:  # Conditions for matching nodes
+              - key: name  # Node label key to match
+                operator: In  # Operator to check if label values match
+                values: 
+                - workerOne  # Value of the node label required for scheduling
+      containers:  # List of containers to run in the pod
+      - name: javawebapp  # Name of the container
+        image: tushar660/maven-app:1  # Docker image to deploy
+        resources:  # Resource requests and limits for the container
+          requests:
+            cpu: "200m"  # Minimum CPU resources required
+            memory: "256Mi"  # Minimum memory resources required
+          limits:
+            cpu: "300m"  # Maximum CPU resources allocated
+            memory: "500Mi"  # Maximum memory resources allocated
+        ports:  # Ports exposed by the container
+        - containerPort: 8080  # Internal container port
+        volumeMounts:  # Volumes to mount inside the container
+        - name: configmapvol  # Reference to the defined volume
+          mountPath: "/usr/local/tomcat/conf/tomcat-users.xml"  # Path where the file will be mounted in the container
+          subPath: "tomcat-users.xml"  # Specific file from the ConfigMap
+      volumes:  # Define volumes available to the pod
+      - name: configmapvol  # Name of the volume
+        configMap:  # Use data from a ConfigMap
+          name: javawebapptomcatconf  # Name of the ConfigMap
+          items:  # Specify individual keys and their mappings
+          - key: "tomcat-users.xml"  # Key in the ConfigMap to use
+            path: "tomcat-users.xml"  # File name for the mounted data
+---
+# Service to expose the Java web application
+apiVersion: v1  # Specifies the API version for Service
+kind: Service  # Declares that this is a Service resource
+metadata:
+  name: myapp  # Name of the Service
+spec:
+  type: NodePort  # Exposes the Service externally using a NodePort
+  selector:
+    app: javawebapp  # Matches the pods with the label `app=javawebapp`
+  ports:  # Defines the ports exposed by the Service
+  - port: 80  # External port on which the Service is accessible
+    targetPort: 8080  # Port on the container to which traffic is forwarded
+    # Optional: Use `nodePort` to specify a custom port in the 30000-32767 range
+---
+# ConfigMap containing configuration data for the Tomcat server
+apiVersion: v1  # Specifies the API version for ConfigMap
+kind: ConfigMap  # Declares that this is a ConfigMap resource
+metadata:
+  name: javawebapptomcatconf  # Name of the ConfigMap
+data:
+  tomcat-users.xml: |  # Key and the content for the Tomcat configuration file
+    <?xml version='1.0' encoding='utf-8'?>
+    <tomcat-users xmlns="http://tomcat.apache.org/xml"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://tomcat.apache.org/xml tomcat-users.xsd"
+              version="1.0">
+    <user username="tushar" password="test" roles="admin-gui,manager-gui"/>  # Tomcat user credentials with roles
+    </tomcat-users>
+    # This XML file configures the users and roles for the Tomcat server.
+    # `username`: Username for authentication
+    # `password`: Password for the user
+    # `roles`: Assigns roles to the user for accessing Tomcat features

@@ -1,0 +1,85 @@
+# Deployment configuration for the Java web application
+apiVersion: apps/v1  # Specifies the API version for Deployment
+kind: Deployment  # Declares that this is a Deployment resource
+metadata:
+  name: javawebapp  # Name of the Deployment
+spec:
+  replicas: 2  # Number of pod replicas to run for high availability
+  selector:
+    matchLabels:
+      app: javawebapp  # Label to identify the pods managed by this Deployment
+  template:
+    metadata:
+      labels:
+        app: javawebapp  # Label assigned to the pod template for identification
+    spec:
+      affinity:
+        podAffinity:  # Defines pod affinity rules for scheduling
+          requiredDuringSchedulingIgnoredDuringExecution:  # Mandatory pod placement rules
+          - labelSelector:  # Specifies which pods this affinity applies to
+              matchExpressions:
+              - key: app  # Label key to match
+                operator: In  # Operator to check if the label value is in the list
+                values: 
+                - nginx  # Target pods with the label `app=nginx`
+            topologyKey: "kubernetes.io/hostname"  # Pods must run on the same host as the target pods
+      containers:  # List of containers to run in the pod
+      - name: javawebapp  # Name of the container
+        image: tushar660/maven-app:1  # Docker image for the container
+        resources:  # Resource requests and limits for the container
+          requests:
+            cpu: "200m"  # Minimum CPU required for the container
+            memory: "256Mi"  # Minimum memory required for the container
+          limits:
+            cpu: "300m"  # Maximum CPU allocated to the container
+            memory: "500Mi"  # Maximum memory allocated to the container
+        ports:  # Ports exposed by the container
+        - containerPort: 8080  # Internal container port for the Java application
+        volumeMounts:  # Defines volume mounts for the container
+        - name: configmapvol  # Reference to the defined volume
+          mountPath: "/usr/local/tomcat/conf/tomcat-users.xml"  # Path where the file will be mounted
+          subPath: "tomcat-users.xml"  # Specific file from the ConfigMap to mount
+      volumes:  # Volumes available to the pod
+      - name: configmapvol  # Name of the volume
+        configMap:  # Data comes from a ConfigMap
+          name: javawebapptomcatconf  # Name of the ConfigMap
+          items:  # Map specific keys in the ConfigMap to files
+          - key: "tomcat-users.xml"  # Key in the ConfigMap
+            path: "tomcat-users.xml"  # File name within the mounted volume
+---
+# Service to expose the Java web application
+apiVersion: v1  # Specifies the API version for Service
+kind: Service  # Declares that this is a Service resource
+metadata:
+  name: myapp  # Name of the Service
+spec:
+  type: NodePort  # Exposes the Service externally on a node port
+  selector:
+    app: javawebapp  # Matches pods with the label `app=javawebapp`
+  ports:  # List of ports exposed by the Service
+  - port: 80  # Port on which the Service is accessible
+    targetPort: 8080  # Port on the container to which traffic is forwarded
+    # The `NodePort` type exposes the Service on a port in the 30000-32767 range
+---
+# ConfigMap containing configuration data for the Tomcat server
+apiVersion: v1  # Specifies the API version for ConfigMap
+kind: ConfigMap  # Declares that this is a ConfigMap resource
+metadata:
+  name: javawebapptomcatconf  # Name of the ConfigMap
+data:
+  tomcat-users.xml: |  # Configuration file for Tomcat users
+    <?xml version='1.0' encoding='utf-8'?>
+    <tomcat-users xmlns="http://tomcat.apache.org/xml"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://tomcat.apache.org/xml tomcat-users.xsd"
+              version="1.0">
+    <user username="tushar" password="test" roles="admin-gui,manager-gui"/>  
+    # Adds a user named 'tushar' with the password 'test' to the Tomcat server.
+    # `username`: Specifies the username for authentication in Tomcat GUI.
+    # `password`: Password for the above username.
+    # `roles`: Defines user permissions. 
+    # - `admin-gui`: Grants access to the admin panel.
+    # - `manager-gui`: Grants access to the manager panel.
+    </tomcat-users>
+    # The `tomcat-users.xml` file is critical for managing user access to the Tomcat server.
+    # Ensure these credentials are secured in production environments.

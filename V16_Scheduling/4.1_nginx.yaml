@@ -1,0 +1,15 @@
+apiVersion: v1  # Specifies the API version for the Pod resource
+kind: Pod  # Declares that this is a Pod resource
+metadata:
+  name: nginxpod  # Name of the Pod
+  # namespace: test-ns  # Uncomment to specify a namespace for the Pod (default is 'default' namespace)
+  labels:  # Labels assigned to the Pod for identification and organization
+    name: nginx  # Label key-value pair to identify the Pod
+spec:
+  containers:  # Defines the list of containers to run in the Pod
+  - name: nginx  # Name of the container
+    image: nginx  # Docker image used for the container
+    ports:  # List of ports exposed by the container
+    - containerPort: 80  # Port exposed by the nginx container
+    # The `nginx` image is used to run a web server, with port 80 as the default HTTP port.
+    # Use labels to identify and select this Pod for services or operations.
