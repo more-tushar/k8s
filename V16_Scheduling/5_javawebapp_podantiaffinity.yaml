@@ -12,7 +12,7 @@ spec:
     metadata:
       labels:
         app: javawebapp  # Label applied to the pod template
-    spec:
+    spec: 
       affinity:
         podAntiAffinity:  # Ensures pods are scheduled on different nodes to enhance high availability
           requiredDuringSchedulingIgnoredDuringExecution:

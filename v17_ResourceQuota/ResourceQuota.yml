@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: my-quota
+  namespace: test-ns
+spec:
+  hard:
+    requests.cpu: "1"      # Max total CPU requests
+    requests.memory: "1Gi" # Max total memory requests
+    limits.cpu: "2"        # Max total CPU limits
+    limits.memory: "2Gi"   # Max total memory limits

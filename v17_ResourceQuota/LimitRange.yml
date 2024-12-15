@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: resource-limits
+  namespace: test-ns
+spec:
+  limits:
+  - type: Container
+    # default:
+    #   cpu: "500m"          # Default CPU limit (0.5 CPU)
+    #   memory: "1Gi"        # Default memory limit (1 GB)
+    # defaultRequest:
+    #   cpu: "200m"          # Default CPU request (0.2 CPU)
+    #   memory: "512Mi"      # Default memory request (512 MB)
+    max:
+      cpu: "1"             # Maximum CPU limit (1 CPU)
+      memory: "2Gi"        # Maximum memory limit (2 GB)
+    min:
+      cpu: "100m"          # Minimum CPU request (0.1 CPU)
+      memory: "256Mi"      # Minimum memory request (256 MB)
